@@ -5,7 +5,8 @@ import 'package:intl/intl.dart';
 final formatter = DateFormat.yMd();
 
 class NewExpense extends StatefulWidget {
-  const NewExpense({super.key});
+  const NewExpense({super.key, required this.onAddExpense});
+  final void Function(Expense expense) onAddExpense;
 
   State<NewExpense> createState() {
     return _NewExpenseState();
@@ -16,11 +17,50 @@ class _NewExpenseState extends State<NewExpense> {
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
   DateTime? _selectedDate;
+  Category _selectedCategory = Category.leisure;
+
   @override
   void dispose() {
     _titleController.dispose();
     _amountController.dispose();
     super.dispose();
+  }
+
+void _submitExpenseData() {
+    final enteredAmount = double.tryParse(_amountController.text);
+    final amountIsInvalid = enteredAmount == null || enteredAmount <= 0;
+    if (_titleController.text.trim().isEmpty ||
+        amountIsInvalid ||
+        _selectedDate == null) //run when an error happsns
+    {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text("Invalid Input!"),
+          content: const Text(
+            "Please make sure to have a valid Title, Date, and Amount!",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+              },
+              child: const Text("Okay!"),
+            ),
+          ],
+        ),
+      );
+      return;
+}
+    widget.onAddExpense(
+      Expense(
+        title: _titleController.text,
+        amount: enteredAmount,
+        date: _selectedDate!,
+        category: _selectedCategory,
+      ),
+    );
+    Navigator.pop(context);
   }
 
   void _presentDatePicker() async { 
@@ -84,11 +124,23 @@ class _NewExpenseState extends State<NewExpense> {
       Row(
         children: [
           DropdownButton(
+            value: _selectedCategory,
             items: Category.values.map(
-              (category) => DropDownMenuItem(
-                child: Text(category.name.toString(),),),
+              (category) => DropdownMenuItem(
+                value: Category,
+                child: Text(category.name.toUpperCase(),),),
               ).toList(),
-            onChanged: (value) {},
+            onChanged: (value) {
+              if (value == null)
+              {
+                return;
+              }
+              setState(() {
+                _selectedCategory = value;
+                print (_selectedCategory);
+              }
+              );
+            },
             ),
 
           Spacer(),
@@ -99,7 +151,7 @@ class _NewExpenseState extends State<NewExpense> {
             child: Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {}, 
+            onPressed: _submitExpenseData, 
             child: Text('Save Expense'),
           ),
         ],
