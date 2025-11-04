@@ -21,7 +21,8 @@ class ExpensesList extends StatelessWidget {
           color: Theme.of(context).colorScheme.error
           ),
         onDismissed:(direction){
-          onRemoveExpense(expenses[index]);},
+          onRemoveExpense(expenses[index]);
+          },
         child: ExpenseItem(expense: expenses[index])),
     );
   }
